@@ -28,33 +28,9 @@ import {
   delayWhen,
 } from 'rxjs/operators';
 
+import { retryDelay, retryableAsync } from './utils/observableUtils';
+
 export default function run() {
-  const retryDelay = (retries, timeDelay) =>
-    retryWhen(error$ =>
-      error$.pipe(
-        delay(timeDelay),
-        startWith(1),
-        scan((count, currentErr) => {
-          console.warn('TRY #', count);
-          console.log(`${count} >= ${retries}`, count >= retries);
-          if (count >= retries) {
-            console.warn('NO MORE TRIES');
-            throw currentErr;
-          } else {
-            return (count += 1);
-          }
-        })
-      )
-    );
-
-  const retryableAsync = (funcAsync, retries = 3, timeDelay = 500) =>
-    defer(funcAsync)
-      .pipe(
-        flatMap(async x => await x),
-        retryDelay(retries, timeDelay)
-      )
-      .toPromise();
-
   // const toPromise = obs =>
   //   new Promise((resolve, reject) => {
   //     let value;
@@ -65,39 +41,34 @@ export default function run() {
   //     });
   //   });
 
-  let index = 0;
-  const testAsync = () => {
-    console.log('Called at index', index);
-    const values = [false, false, false, false, true];
-    const curr = values[index];
-    index++;
-
-    return curr ? Promise.resolve(1) : Promise.reject('Some error!');
-  };
-
-  // retryableAsync$(() => testAsync()).subscribe(
-  //   x => console.log('Next: ', x),
-  //   err => console.log('Error: ', err),
-  //   () => console.log('Completed')
-  // );
-
-  retryableAsync(() => testAsync(), 4, 2000)
-    .then(x => console.log('Next: ', x))
-    .catch(err => console.log('Error: ', err));
-
-  // // const testAsync = () => Promise.resolve(true);
   // let index = 0;
   // const testAsync = () => {
-  //   const values = [true, true, false, true];
-  //   return Promise.resolve(values[index++]);
+  //   console.log('Called at index', index);
+  //   const values = [true, false, false, false, false];
+  //   const curr = values[index];
+  //   index++;
+
+  //   return curr ? Promise.resolve(1) : Promise.reject('Some error!');
   // };
-  // // const testAsync = () =>
-  // //   from(testPromise())
-  // //     .pipe(
-  // //       tap(v => console.log(v)),
-  // //       retryDelay(3, 2000)
-  // //     )
-  // //     .toPromise();
+
+  // // retryableAsync$(() => testAsync()).subscribe(
+  // //   x => console.log('Next: ', x),
+  // //   err => console.log('Error: ', err),
+  // //   () => console.log('Completed')
+  // // );
+
+  // // retryableAsync(() => testAsync(), 4, 2000)
+  // //   .then(x => console.log('Next: ', x))
+  // //   .catch(err => console.log('Error: ', err));
+  // const doAsync = async () => {
+  //   try {
+  //     await retryableAsync(() => testAsync(), 4, 2000);
+  //     return true;
+  //   } catch (error) {
+  //     console.error(error);
+  //     return false;
+  //   }
+  // };
 
   // const testSubject$ = new ReplaySubject();
 
@@ -105,7 +76,7 @@ export default function run() {
   //   .pipe(
   //     startWith([]),
   //     scan(async (acc, val) => {
-  //       const success = await testAsync();
+  //       const success = await doAsync();
   //       if (!success) {
   //         throw new Error('Failed');
   //       }
@@ -124,8 +95,7 @@ export default function run() {
 
   //       // throw new Error('Failed');
   //     }),
-  //     flatMap(async values => await values),
-  //     retryDelay(3, 2000)
+  //     flatMap(async values => await values)
   //   )
   //   .subscribe(
   //     values => console.log('VALUES', values),
@@ -135,75 +105,115 @@ export default function run() {
   // testSubject$.next(1);
   // testSubject$.next(2);
   // testSubject$.next(3);
-  // testSubject$.next(4);
+  // // testSubject$.next(4);
 
   //-----------------------------------------
 
-  // const sampleIds = Array(10)
-  //   .fill()
-  //   .map(_ => shortid());
-  // console.log(sampleIds);
+  const sampleIds = Array(10)
+    .fill()
+    .map(_ => shortid());
+  console.log(sampleIds);
 
-  // let idCount = 0;
-  // const getId = () => {
-  //   return sampleIds[idCount++];
-  // };
+  let idCount = 0;
+  const getId = () => {
+    return sampleIds[idCount++];
+  };
 
-  // const items = [
-  //   {
-  //     id: getId(),
-  //     name: 'item1',
-  //     completed: false,
-  //   },
-  //   {
-  //     id: getId(),
-  //     name: 'item2',
-  //     completed: false,
-  //   },
-  //   {
-  //     id: getId(),
-  //     name: 'item3',
-  //     completed: false,
-  //   },
-  // ];
+  const items = [
+    {
+      id: getId(),
+      name: 'item1',
+      completed: false,
+    },
+    {
+      id: getId(),
+      name: 'item2',
+      completed: false,
+    },
+    {
+      id: getId(),
+      name: 'item3',
+      completed: false,
+    },
+  ];
 
-  // const getItems = () => of(items).toPromise();
+  const getItems = () => of(items).toPromise();
 
-  // const addItem = item =>
-  //   Observable.create(o => {
-  //     o.next(item);
-  //     o.complete();
-  //   })
-  //     .pipe(
-  //       map(item => {
-  //         item.id = getId();
-  //         return item;
-  //       }),
-  //       tap(item => console.log('ADD >>>', item))
-  //     )
-  //     .toPromise();
+  const addItem = item =>
+    Observable.create(o => {
+      o.next(item);
+      o.complete();
+    })
+      .pipe(
+        map(item => {
+          item.id = getId();
+          return item;
+        }),
+        tap(item => console.log('ADD >>>', item))
+      )
+      .toPromise();
 
-  // const removeItem = id =>
-  //   Observable.create(o => {
-  //     o.next(id);
-  //     o.complete();
-  //   })
-  //     .pipe(
-  //       tap(id => console.log('REMOVE >>>', id)),
-  //       map(_ => false)
-  //     )
-  //     .toPromise();
+  const removeItem = id =>
+    new Promise((resolve, reject) => {
+      console.log('REMOVE >>>', id);
+      return resolve(true);
+      // return reject('Fake server error!');
+    });
+  // Observable.create(o => {
+  //   o.next(id);
+  //   o.complete();
+  // })
+  //   .pipe(
+  //     tap(id => console.log('REMOVE >>>', id)),
+  //     map(_ => false)
+  //   )
+  //   .toPromise();
 
-  // const completeItem = id =>
-  //   Observable.create(o => {
-  //     o.next(id);
-  //     o.complete();
-  //   })
-  //     .pipe(
-  //       tap(id => console.log('COMPLETE >>>', id)),
-  //       map(_ => true)
-  //     )
-  //     .toPromise();
+  const completeItem = id =>
+    Observable.create(o => {
+      o.next(id);
+      o.complete();
+    })
+      .pipe(
+        tap(id => console.log('COMPLETE >>>', id)),
+        map(_ => true)
+      )
+      .toPromise();
+
+  const getItemsAsync = async () => {
+    try {
+      return await retryableAsync(() => getItems());
+    } catch (error) {
+      console.error(error);
+      return [];
+    }
+  };
+
+  const addItemAsync = async item => {
+    try {
+      return await retryableAsync(() => addItem(item));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const removeItemAsync = async id => {
+    try {
+      return await retryableAsync(() => removeItem(id));
+    } catch (error) {
+      console.error(error);
+      return false;
+    }
+  };
+
+  const completeItemAsync = async id => {
+    try {
+      return await retryableAsync(() => completeItem(id));
+    } catch (error) {
+      console.error(error);
+      return false;
+    }
+  };
 
   // // addItem({
   // //   id: 100,
@@ -215,165 +225,164 @@ export default function run() {
 
   // // from(getItems()).subscribe(x => console.log(x));
 
-  // const itemSubject$ = new ReplaySubject();
+  const itemSubject$ = new ReplaySubject();
 
-  // // Observable.create(o => {
-  // //   o.next(items);
-  // //   // o.complete();
-  // // })
-  // // const s = subject.pipe(
-  // //   // tap(_ => console.log(_)),
-  // //   tap(val => items.push(val))
-  // //   // tap(val => console.log(val))
-  // // );
-
-  // // from(items).subscribe(x => console.log(x));
-  // const items$ = from(getItems()).pipe(
-  //   tap(_ => console.log('BOOM')),
-  //   flatMap(items => items)
+  // Observable.create(o => {
+  //   o.next(items);
+  //   // o.complete();
+  // })
+  // const s = subject.pipe(
+  //   // tap(_ => console.log(_)),
+  //   tap(val => items.push(val))
+  //   // tap(val => console.log(val))
   // );
 
-  // // .subscribe(x => console.log('>>', x));
+  // from(items).subscribe(x => console.log(x));
+  const items$ = from(getItemsAsync()).pipe(
+    tap(_ => console.log('BOOM')),
+    flatMap(items => items)
+  );
 
-  // // const addItem$ = itemSubject$.pipe(
-  // //   filter(request => request.op === 'add'),
-  // //   map(request => request.item)
-  // // );
+  // .subscribe(x => console.log('>>', x));
 
-  // // const removeItem$ = itemSubject$.pipe(
-  // //   filter(request => request.op === 'remove'),
-  // //   map(request => request.id),
-  // //   filter(id => )
-  // // );
+  // const addItem$ = itemSubject$.pipe(
+  //   filter(request => request.op === 'add'),
+  //   map(request => request.item)
+  // );
 
-  // concat(items$, itemSubject$)
-  //   .pipe(
-  //     startWith({
-  //       items: [],
-  //       showAll: true,
-  //     }),
-  //     scan(async (acc, request) => {
-  //       if (!request.op) {
-  //         const a = await acc;
-  //         a.items.push(request);
-  //         return acc;
-  //       }
+  // const removeItem$ = itemSubject$.pipe(
+  //   filter(request => request.op === 'remove'),
+  //   map(request => request.id),
+  //   filter(id => )
+  // );
 
-  //       switch (request.op) {
-  //         case 'add': {
-  //           const item = await addItem(request.item);
-  //           const a = await acc;
-  //           a.items.push(item);
-  //           return acc;
-  //         }
+  concat(items$, itemSubject$)
+    .pipe(
+      startWith({
+        items: [],
+        showAll: true,
+      }),
+      scan(async (acc, request) => {
+        if (!request.op) {
+          const a = await acc;
+          a.items.push(request);
+          return acc;
+        }
 
-  //         case 'remove': {
-  //           const a = await acc;
-  //           const matchedIndex = a.items.findIndex(
-  //             item => item.id === request.id
-  //           );
+        switch (request.op) {
+          case 'add': {
+            const item = await addItemAsync(request.item);
+            const a = await acc;
+            a.items.push(item);
+            return acc;
+          }
 
-  //           if (matchedIndex === -1) {
-  //             throw new Error(`Cannot find item with ID = "${request.id}".`);
-  //           }
+          case 'remove': {
+            const a = await acc;
+            const matchedIndex = a.items.findIndex(
+              item => item.id === request.id
+            );
 
-  //           const success = await removeItem(request.id);
+            if (matchedIndex === -1) {
+              throw new Error(`Cannot find item with ID = "${request.id}".`);
+            }
 
-  //           if (!success) {
-  //             throw new Error(`Server: Failed to remove item "${request.id}".`);
-  //           }
+            const success = await removeItemAsync(request.id);
 
-  //           a.items.splice(matchedIndex, 1);
-  //           return acc;
-  //         }
+            if (!success) {
+              throw new Error(`Server: Failed to remove item "${request.id}".`);
+            }
 
-  //         case 'complete': {
-  //           const a = await acc;
-  //           const matchedIndex = a.items.findIndex(
-  //             item => item.id === request.id
-  //           );
+            a.items.splice(matchedIndex, 1);
+            return acc;
+          }
 
-  //           if (matchedIndex === -1) {
-  //             throw new Error(`Cannot find item with ID = "${request.id}".`);
-  //           }
+          case 'complete': {
+            const a = await acc;
+            const matchedIndex = a.items.findIndex(
+              item => item.id === request.id
+            );
 
-  //           const success = await completeItem(request.id);
+            if (matchedIndex === -1) {
+              throw new Error(`Cannot find item with ID = "${request.id}".`);
+            }
 
-  //           if (!success) {
-  //             throw new Error(
-  //               `Server: Failed to mark item "${request.id}" as complete.`
-  //             );
-  //           }
+            const success = await completeItemAsync(request.id);
 
-  //           a.items[matchedIndex].completed = true;
-  //           return acc;
-  //         }
+            if (!success) {
+              throw new Error(
+                `Server: Failed to mark item "${request.id}" as complete.`
+              );
+            }
 
-  //         case 'filter': {
-  //           const a = await acc;
-  //           a.showAll = request.showAll;
-  //           return acc;
-  //         }
+            a.items[matchedIndex].completed = true;
+            return acc;
+          }
 
-  //         default:
-  //           throw new Error(`Unknown operation: "${request.op}"`);
-  //       }
-  //     }),
-  //     flatMap(async results => {
-  //       const r = await results;
-  //       // console.log('results +++++', JSON.parse(JSON.stringify(r)));
-  //       return r.showAll ? r.items : r.items.filter(item => item.completed);
-  //     }),
-  //     retryDelay(3, 2000)
-  //   )
-  //   .subscribe(
-  //     val => {
-  //       console.log('SUB:::', JSON.parse(JSON.stringify(val)));
-  //     },
-  //     err => {
-  //       console.error(err);
-  //     }
-  //   );
+          case 'filter': {
+            const a = await acc;
+            a.showAll = request.showAll;
+            return acc;
+          }
 
-  // itemSubject$.next({
-  //   op: 'add',
-  //   item: {
-  //     name: 'item4',
-  //     completed: false,
-  //   },
-  // });
-  // itemSubject$.next({
-  //   op: 'add',
-  //   item: {
-  //     name: 'item5',
-  //     completed: false,
-  //   },
-  // });
-  // itemSubject$.next({
-  //   op: 'add',
-  //   item: {
-  //     name: 'item6',
-  //     completed: false,
-  //   },
-  // });
-  // itemSubject$.next({
-  //   op: 'remove',
-  //   id: sampleIds[3],
-  // });
+          default:
+            throw new Error(`Unknown operation: "${request.op}"`);
+        }
+      }),
+      flatMap(async results => {
+        const r = await results;
+        // console.log('results +++++', JSON.parse(JSON.stringify(r)));
+        return r.showAll ? r.items : r.items.filter(item => item.completed);
+      })
+    )
+    .subscribe(
+      val => {
+        console.log('SUB:::', JSON.parse(JSON.stringify(val)));
+      },
+      err => {
+        console.error(err);
+      }
+    );
 
-  // itemSubject$.next({
-  //   op: 'complete',
-  //   id: sampleIds[4],
-  // });
+  itemSubject$.next({
+    op: 'add',
+    item: {
+      name: 'item4',
+      completed: false,
+    },
+  });
+  itemSubject$.next({
+    op: 'add',
+    item: {
+      name: 'item5',
+      completed: false,
+    },
+  });
+  itemSubject$.next({
+    op: 'add',
+    item: {
+      name: 'item6',
+      completed: false,
+    },
+  });
+  itemSubject$.next({
+    op: 'remove',
+    id: sampleIds[3],
+  });
 
-  // itemSubject$.next({
-  //   op: 'filter',
-  //   showAll: false,
-  // });
-  // itemSubject$.next({
-  //   op: 'filter',
-  //   showAll: true,
-  // });
+  itemSubject$.next({
+    op: 'complete',
+    id: sampleIds[4],
+  });
+
+  itemSubject$.next({
+    op: 'filter',
+    showAll: false,
+  });
+  itemSubject$.next({
+    op: 'filter',
+    showAll: true,
+  });
 
   // from(items)
   //   .pipe(

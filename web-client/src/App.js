@@ -2,14 +2,30 @@ import React, { Component } from 'react';
 
 import Counter from './components/Counter';
 
+import TodoService from './services/TodoService';
+
 import CounterBloc from './blocs/CounterBloc';
 import TodoBloc from './blocs/TodoBloc';
 
-const todoServiceUrl = 'http://localhost:5000/api/todo';
+const todoService = new TodoService('http://localhost:5000/api/todo');
 
 const counterBloc = new CounterBloc();
-// const todoBloc = new TodoBloc(todoServiceUrl);
-// todoBloc.items.subscribe(items => console.log('sub:', items));
+const todoBloc = new TodoBloc(todoService);
+todoBloc.items.subscribe({
+  next: items => console.log('ITEMS:::', JSON.parse(JSON.stringify(items))),
+  error: error => console.error('ITEMS:::', error),
+  complete: () => console.log('ITEMS:::', 'Completed!'),
+});
+// todoBloc.items.subscribe({
+//   next: items => console.log('ITEMS 2:::', JSON.parse(JSON.stringify(items))),
+//   error: error => console.error('ITEMS 2:::', error),
+//   complete: () => console.log('ITEMS 2:::', 'Completed!'),
+// });
+todoBloc.showAll.subscribe({
+  next: items => console.log('SHOW ALL:::', JSON.parse(JSON.stringify(items))),
+  error: error => console.error('SHOW ALL:::', error),
+  complete: () => console.log('SHOW ALL:::', 'Completed!'),
+});
 // todoBloc.add({
 //   name: 'hello',
 //   completed: false,
@@ -22,6 +38,8 @@ const counterBloc = new CounterBloc();
 //   name: 'there',
 //   completed: false,
 // });
+todoBloc.showAll = false;
+todoBloc.showAll = true;
 
 class App extends Component {
   render() {
