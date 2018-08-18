@@ -1,0 +1,35 @@
+.todo-item {
+  display: flex;
+  align-items: center;
+  padding: 0.4em 0;
+
+  &__body {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  &__checkbox {
+    cursor: pointer;
+    color: lightgrey;
+  }
+
+  &__label {
+    margin-left: 0.5em;
+    font-weight: bold;
+
+    &--done {
+      text-decoration: line-through;
+      color: lightgrey;
+    }
+  }
+
+  &__close-button {
+    display: none;
+    &--visible {
+      display: block;
+      cursor: pointer;
+    }
+  }
+}
