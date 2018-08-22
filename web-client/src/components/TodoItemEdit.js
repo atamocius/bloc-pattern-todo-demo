@@ -19,7 +19,7 @@ class TodoItemEdit extends Component {
   }
 
   render() {
-    const { onSubmit, onBlur } = this.props;
+    const { onSubmit } = this.props;
     const { value } = this.state;
 
     return (
@@ -30,7 +30,7 @@ class TodoItemEdit extends Component {
             fluid
             value={value}
             onChange={e => this._handleTextChange(e.currentTarget.value)}
-            onBlur={e => onBlur(e.currentTarget.value)}
+            onBlur={() => onSubmit(value)}
           />
         </Form>
       </div>

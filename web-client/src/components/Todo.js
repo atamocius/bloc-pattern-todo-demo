@@ -51,7 +51,6 @@ class Todo extends Component {
         <TodoItemEdit
           value={item.text}
           onSubmit={t => this._handleItemSubmitEdit(item.id, t)}
-          onBlur={t => this._handleItemSubmitEdit(item.id, t)}
         />
       ) : (
         <TodoItem
