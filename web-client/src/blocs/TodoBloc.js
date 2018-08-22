@@ -8,6 +8,12 @@ import {
   shareReplay,
 } from 'rxjs/operators';
 
+class Filter {
+  static all = 'all';
+  static active = 'active';
+  static completed = 'completed';
+}
+
 class ItemOp {
   static add = 'add';
   static remove = 'remove';
@@ -28,7 +34,7 @@ export default class TodoBloc {
     this._item$ = concat(allItems, this._itemSubject).pipe(
       startWith({
         items: [],
-        showAll: true,
+        filter: Filter.all,
       }),
       scan(async (acc, request) => {
         if (!request.op) {
@@ -39,57 +45,60 @@ export default class TodoBloc {
 
         switch (request.op) {
           case ItemOp.add: {
-            const item = await todoService.add(request.item);
             const a = await acc;
-            a.items.push(item);
+            await this._addItem(todoService, a.items, request.item);
+            // const item = await todoService.add(request.item);
+            // a.items.push(item);
             return acc;
           }
 
           case ItemOp.remove: {
             const a = await acc;
-            const matchedIndex = a.items.findIndex(
-              item => item.id === request.id
-            );
+            await this._removeItem(todoService, a.items, request.id);
+            // const matchedIndex = a.items.findIndex(
+            //   item => item.id === request.id
+            // );
 
-            if (matchedIndex === -1) {
-              throw new Error(`Cannot find item with ID = "${request.id}".`);
-            }
+            // if (matchedIndex === -1) {
+            //   throw new Error(`Cannot find item with ID = "${request.id}".`);
+            // }
 
-            const success = await todoService.remove(request.id);
+            // const success = await todoService.remove(request.id);
 
-            if (!success) {
-              throw new Error(`Server: Failed to remove item "${request.id}".`);
-            }
+            // if (!success) {
+            //   throw new Error(`Server: Failed to remove item "${request.id}".`);
+            // }
 
-            a.items.splice(matchedIndex, 1);
+            // a.items.splice(matchedIndex, 1);
             return acc;
           }
 
           case ItemOp.complete: {
             const a = await acc;
-            const matchedIndex = a.items.findIndex(
-              item => item.id === request.id
-            );
+            await this._markAsCompleted(todoService, a.items, request.id);
+            // const matchedIndex = a.items.findIndex(
+            //   item => item.id === request.id
+            // );
 
-            if (matchedIndex === -1) {
-              throw new Error(`Cannot find item with ID = "${request.id}".`);
-            }
+            // if (matchedIndex === -1) {
+            //   throw new Error(`Cannot find item with ID = "${request.id}".`);
+            // }
 
-            const success = await todoService.markAsComplete(request.id);
+            // const success = await todoService.markAsComplete(request.id);
 
-            if (!success) {
-              throw new Error(
-                `Server: Failed to mark item "${request.id}" as complete.`
-              );
-            }
+            // if (!success) {
+            //   throw new Error(
+            //     `Server: Failed to mark item "${request.id}" as complete.`
+            //   );
+            // }
 
-            a.items[matchedIndex].completed = true;
+            // a.items[matchedIndex].completed = true;
             return acc;
           }
 
           case ItemOp.filter: {
             const a = await acc;
-            a.showAll = request.showAll;
+            a.filter = request.filter;
             return acc;
           }
 
@@ -99,12 +108,10 @@ export default class TodoBloc {
       }),
       flatMap(async results => {
         const r = await results;
-        return r.showAll
-          ? r
-          : {
-              items: r.items.filter(item => item.completed),
-              showAll: r.showAll,
-            };
+        return {
+          items: this._applyFilter(r, r.filter),
+          filter: r.filter,
+        };
       }),
       shareReplay()
     );
@@ -114,14 +121,14 @@ export default class TodoBloc {
     return this._item$.pipe(map(results => results.items));
   }
 
-  get showAll() {
-    return this._item$.pipe(map(results => results.showAll));
+  get filter() {
+    return this._item$.pipe(map(results => results.filter));
   }
 
-  set showAll(value) {
+  set filter(value) {
     this._itemSubject.next({
       op: ItemOp.filter,
-      showAll: value,
+      filter: value,
     });
   }
 
@@ -144,5 +151,56 @@ export default class TodoBloc {
       op: ItemOp.complete,
       id,
     });
+  }
+
+  async _addItem(service, items, newItem) {
+    const newItemWithId = await service.add(newItem);
+    items.push(newItemWithId);
+  }
+
+  async _removeItem(service, items, id) {
+    const matchedIndex = items.findIndex(item => item.id === id);
+
+    if (matchedIndex === -1) {
+      throw new Error(`Cannot find item with ID = "${id}".`);
+    }
+
+    const success = await service.remove(id);
+
+    if (!success) {
+      throw new Error(`Server: Failed to remove item "${id}".`);
+    }
+
+    items.splice(matchedIndex, 1);
+  }
+
+  async _markAsCompleted(service, items, id) {
+    const matchedIndex = items.findIndex(item => item.id === id);
+
+    if (matchedIndex === -1) {
+      throw new Error(`Cannot find item with ID = "${id}".`);
+    }
+
+    const success = await service.markAsComplete(id);
+
+    if (!success) {
+      throw new Error(`Server: Failed to mark item "${id}" as complete.`);
+    }
+
+    items[matchedIndex].completed = true;
+  }
+
+  _applyFilter(items, filter) {
+    switch (filter) {
+      case Filter.active:
+        return items.filter(i => !i.done);
+
+      case Filter.completed:
+        return items.filter(i => i.done);
+
+      default:
+        // Filter.all
+        return items;
+    }
   }
 }
