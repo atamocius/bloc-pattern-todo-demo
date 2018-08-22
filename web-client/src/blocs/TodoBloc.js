@@ -47,52 +47,18 @@ export default class TodoBloc {
           case ItemOp.add: {
             const a = await acc;
             await this._addItem(todoService, a.items, request.item);
-            // const item = await todoService.add(request.item);
-            // a.items.push(item);
             return acc;
           }
 
           case ItemOp.remove: {
             const a = await acc;
             await this._removeItem(todoService, a.items, request.id);
-            // const matchedIndex = a.items.findIndex(
-            //   item => item.id === request.id
-            // );
-
-            // if (matchedIndex === -1) {
-            //   throw new Error(`Cannot find item with ID = "${request.id}".`);
-            // }
-
-            // const success = await todoService.remove(request.id);
-
-            // if (!success) {
-            //   throw new Error(`Server: Failed to remove item "${request.id}".`);
-            // }
-
-            // a.items.splice(matchedIndex, 1);
             return acc;
           }
 
           case ItemOp.complete: {
             const a = await acc;
             await this._markAsCompleted(todoService, a.items, request.id);
-            // const matchedIndex = a.items.findIndex(
-            //   item => item.id === request.id
-            // );
-
-            // if (matchedIndex === -1) {
-            //   throw new Error(`Cannot find item with ID = "${request.id}".`);
-            // }
-
-            // const success = await todoService.markAsComplete(request.id);
-
-            // if (!success) {
-            //   throw new Error(
-            //     `Server: Failed to mark item "${request.id}" as complete.`
-            //   );
-            // }
-
-            // a.items[matchedIndex].completed = true;
             return acc;
           }
 
