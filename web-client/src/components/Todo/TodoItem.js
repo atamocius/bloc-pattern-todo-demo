@@ -14,10 +14,16 @@ class TodoItem extends Component {
   }
 
   render() {
-    const { label, checked, onChangeCheckbox, onDoubleClickBody } = this.props;
+    const {
+      label,
+      done,
+      onCheckboxChange,
+      onBodyDoubleClick,
+      onDelete,
+    } = this.props;
     const { hovering } = this.state;
 
-    const checkIcon = checked ? (
+    const checkIcon = done ? (
       <Icon name="check circle outline" size="large" color="green" />
     ) : (
       <Icon name="circle outline" size="large" />
@@ -28,7 +34,7 @@ class TodoItem extends Component {
     });
 
     const labelClass = classNames('todo-item__label', {
-      'todo-item__label--done': checked,
+      'todo-item__label--done': done,
     });
 
     return (
@@ -39,16 +45,13 @@ class TodoItem extends Component {
       >
         <div
           className="todo-item__checkbox"
-          onClick={() => onChangeCheckbox(!checked)}
+          onClick={() => onCheckboxChange(!done)}
         >
           {checkIcon}
         </div>
-        <div
-          className="todo-item__body"
-          onDoubleClick={() => onDoubleClickBody()}
-        >
+        <div className="todo-item__body" onDoubleClick={onBodyDoubleClick}>
           <span className={labelClass}>{label}</span>
-          <div className={closeButtonClass}>
+          <div className={closeButtonClass} onClick={onDelete}>
             <Icon name="close" color="red" />
           </div>
         </div>
