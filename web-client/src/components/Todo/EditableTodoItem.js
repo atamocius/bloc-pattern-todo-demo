@@ -13,7 +13,7 @@ class EditableTodoItem extends Component {
   }
 
   render() {
-    const { value, done, onCheckboxChange, onDelete } = this.props;
+    const { value, completed, onCheckboxChange, onDelete } = this.props;
     const { editing } = this.state;
 
     return editing ? (
@@ -21,7 +21,7 @@ class EditableTodoItem extends Component {
     ) : (
       <TodoItem
         label={value}
-        done={done}
+        completed={completed}
         onCheckboxChange={onCheckboxChange}
         onBodyDoubleClick={() => this._handleBodyDoubleClick()}
         onDelete={onDelete}

@@ -13,7 +13,7 @@ const TodoList = ({
     <List.Item key={item.id}>
       <EditableTodoItem
         value={item.text}
-        done={item.done}
+        completed={item.completed}
         onCheckboxChange={c => onItemCheckboxChange(item.id, c)}
         onValueChange={t => onItemValueChange(item.id, t)}
         onDelete={() => onItemDelete(item.id)}

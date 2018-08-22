@@ -10,17 +10,17 @@ const sampleItems = [
   {
     id: 'aaa',
     text: 'Item A',
-    done: false,
+    completed: false,
   },
   {
     id: 'bbb',
     text: 'Item B',
-    done: false,
+    completed: false,
   },
   {
     id: 'ccc',
     text: 'Item C',
-    done: false,
+    completed: false,
   },
 ];
 
@@ -38,7 +38,7 @@ class Todo extends Component {
   render() {
     const { items, filteredItems } = this.state;
 
-    const activeItemsCount = items.filter(i => !i.done).length;
+    const activeItemsCount = items.filter(i => !i.completed).length;
 
     return (
       <Container>
@@ -65,7 +65,7 @@ class Todo extends Component {
     items.push({
       id: shortid(),
       text: value,
-      done: false,
+      completed: false,
     });
 
     this.setState({
@@ -77,7 +77,7 @@ class Todo extends Component {
   _handleItemCheckboxChange(id, checked) {
     const items = this.state.items.slice();
     const matchedIndex = items.findIndex(item => item.id === id);
-    items[matchedIndex].done = checked;
+    items[matchedIndex].completed = checked;
 
     this.setState({
       items,
@@ -118,10 +118,10 @@ class Todo extends Component {
   _applyFilter(items, filter) {
     switch (filter) {
       case Filter.active:
-        return items.filter(i => !i.done);
+        return items.filter(i => !i.completed);
 
       case Filter.completed:
-        return items.filter(i => i.done);
+        return items.filter(i => i.completed);
 
       default:
         //Filter.all
