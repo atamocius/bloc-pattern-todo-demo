@@ -42,10 +42,33 @@ export default class TodoService {
     }
   }
 
-  async markAsComplete(id) {
+  async update(id, item) {
     try {
       const res = await retryableAsync(() =>
         fetch(`${this._serviceUrl}/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+          },
+          body: JSON.stringify(item),
+        })
+      );
+
+      if (res.status === 204) {
+        return true;
+      }
+
+      throw new Error(`${res.status}: ${res.statusText}`);
+    } catch (error) {
+      console.error('Fetch Error =\n', error);
+      return false;
+    }
+  }
+
+  async updateCompleted(id, completed) {
+    try {
+      const res = await retryableAsync(() =>
+        fetch(`${this._serviceUrl}/${id}/${completed}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json; charset=utf-8',

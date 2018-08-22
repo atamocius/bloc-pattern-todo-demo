@@ -18,7 +18,8 @@ class ItemOp {
   static add = 'add';
   static remove = 'remove';
   static filter = 'filter';
-  static complete = 'complete';
+  static update = 'update';
+  static updateCompleted = 'updateCompleted';
 }
 
 export default class TodoBloc {
@@ -56,9 +57,25 @@ export default class TodoBloc {
             return acc;
           }
 
-          case ItemOp.complete: {
+          case ItemOp.update: {
             const a = await acc;
-            await this._markAsCompleted(todoService, a.items, request.id);
+            await this._updateName(
+              todoService,
+              a.items,
+              request.id,
+              request.name
+            );
+            return acc;
+          }
+
+          case ItemOp.updateCompleted: {
+            const a = await acc;
+            await this._updateCompleted(
+              todoService,
+              a.items,
+              request.id,
+              request.completed
+            );
             return acc;
           }
 
@@ -75,8 +92,9 @@ export default class TodoBloc {
       flatMap(async results => {
         const r = await results;
         return {
-          items: this._applyFilter(r, r.filter),
+          items: this._applyFilter(r.items, r.filter),
           filter: r.filter,
+          activeCount: this._applyFilter(r.items, Filter.active).length,
         };
       }),
       shareReplay()
@@ -85,6 +103,10 @@ export default class TodoBloc {
 
   get items() {
     return this._item$.pipe(map(results => results.items));
+  }
+
+  get activeCount() {
+    return this._item$.pipe(map(results => results.activeCount));
   }
 
   get filter() {
@@ -112,10 +134,19 @@ export default class TodoBloc {
     });
   }
 
-  completed(id) {
+  updateName(id, name) {
     this._itemSubject.next({
-      op: ItemOp.complete,
+      op: ItemOp.update,
       id,
+      name,
+    });
+  }
+
+  updateCompleted(id, completed) {
+    this._itemSubject.next({
+      op: ItemOp.updateCompleted,
+      id,
+      completed,
     });
   }
 
@@ -140,29 +171,47 @@ export default class TodoBloc {
     items.splice(matchedIndex, 1);
   }
 
-  async _markAsCompleted(service, items, id) {
+  async _updateName(service, items, id, name) {
     const matchedIndex = items.findIndex(item => item.id === id);
 
     if (matchedIndex === -1) {
       throw new Error(`Cannot find item with ID = "${id}".`);
     }
 
-    const success = await service.markAsComplete(id);
+    const matchedItem = items[matchedIndex];
+    matchedItem.name = name;
+    const success = await service.update(id, matchedItem);
 
     if (!success) {
-      throw new Error(`Server: Failed to mark item "${id}" as complete.`);
+      throw new Error(`Server: Failed to update item "${id}".`);
     }
 
-    items[matchedIndex].completed = true;
+    items[matchedIndex].name = name;
+  }
+
+  async _updateCompleted(service, items, id, completed) {
+    const matchedIndex = items.findIndex(item => item.id === id);
+
+    if (matchedIndex === -1) {
+      throw new Error(`Cannot find item with ID = "${id}".`);
+    }
+
+    const success = await service.updateCompleted(id, completed);
+
+    if (!success) {
+      throw new Error(`Server: Failed to update item "${id}".`);
+    }
+
+    items[matchedIndex].completed = completed;
   }
 
   _applyFilter(items, filter) {
     switch (filter) {
       case Filter.active:
-        return items.filter(i => !i.done);
+        return items.filter(i => !i.completed);
 
       case Filter.completed:
-        return items.filter(i => i.done);
+        return items.filter(i => i.completed);
 
       default:
         // Filter.all

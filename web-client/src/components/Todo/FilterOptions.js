@@ -1,5 +1,8 @@
-import React, { Component } from 'react';
+import React, { Fragment } from 'react';
 import { Menu } from 'semantic-ui-react';
+
+import TodoContext from './TodoContext';
+import StreamBuilder from '../../utils/StreamBuilder';
 
 export class Filter {
   static all = 'all';
@@ -7,51 +10,43 @@ export class Filter {
   static completed = 'completed';
 }
 
-class FilterOptions extends Component {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      selectedFilter: Filter.all,
-    };
-  }
-
-  render() {
-    const { activeItemsCount } = this.props;
-    const { selectedFilter } = this.state;
-
-    const itemsLeft =
-      activeItemsCount > 1 ? `${activeItemsCount} items left` : `1 item left`;
-
-    return (
+const FilterOptions = () => (
+  <TodoContext.Consumer>
+    {bloc => (
       <Menu>
-        <Menu.Item>{itemsLeft}</Menu.Item>
-        <Menu.Item
-          active={selectedFilter === Filter.all}
-          name={Filter.all}
-          onClick={() => this._changeFilter(Filter.all)}
-        />
-        <Menu.Item
-          active={selectedFilter === Filter.active}
-          name={Filter.active}
-          onClick={() => this._changeFilter(Filter.active)}
-        />
-        <Menu.Item
-          active={selectedFilter === Filter.completed}
-          name={Filter.completed}
-          onClick={() => this._changeFilter(Filter.completed)}
+        <Menu.Item>
+          <StreamBuilder
+            stream={bloc.activeCount}
+            builder={snapshot =>
+              snapshot.data > 1 ? `${snapshot.data} items left` : `1 item left`
+            }
+          />
+        </Menu.Item>
+        <StreamBuilder
+          stream={bloc.filter}
+          builder={snapshot => (
+            <Fragment>
+              <Menu.Item
+                active={snapshot.data === Filter.all}
+                name={Filter.all}
+                onClick={() => (bloc.filter = Filter.all)}
+              />
+              <Menu.Item
+                active={snapshot.data === Filter.active}
+                name={Filter.active}
+                onClick={() => (bloc.filter = Filter.active)}
+              />
+              <Menu.Item
+                active={snapshot.data === Filter.completed}
+                name={Filter.completed}
+                onClick={() => (bloc.filter = Filter.completed)}
+              />
+            </Fragment>
+          )}
         />
       </Menu>
-    );
-  }
-
-  _changeFilter(filter) {
-    this.setState({
-      selectedFilter: filter,
-    });
-
-    this.props.onFilterChange(filter);
-  }
-}
+    )}
+  </TodoContext.Consumer>
+);
 
 export default FilterOptions;

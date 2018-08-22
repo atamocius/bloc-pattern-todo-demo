@@ -47,26 +47,26 @@ class StreamBuilder extends Component {
       /**
        * @type {AsyncSnapshot}
        */
-      snapshot: new AsyncSnapshot(ConnectionState.waiting, initialData),
+      snapshot: new AsyncSnapshot(ConnectionState.waiting, initialData, null),
     };
 
-    stream.subscribe(
-      data => {
+    stream.subscribe({
+      next: data => {
         this.setState({
           snapshot: new AsyncSnapshot(ConnectionState.active, data, null),
         });
       },
-      error => {
+      error: error => {
         this.setState({
           snapshot: new AsyncSnapshot(ConnectionState.active, null, error),
         });
       },
-      () => {
+      complete: () => {
         this.setState({
           snapshot: new AsyncSnapshot(ConnectionState.done, null, null),
         });
-      }
-    );
+      },
+    });
   }
 
   render() {

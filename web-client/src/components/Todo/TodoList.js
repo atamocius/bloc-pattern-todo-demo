@@ -12,7 +12,7 @@ const TodoList = ({
   const todos = items.map(item => (
     <List.Item key={item.id}>
       <EditableTodoItem
-        value={item.text}
+        value={item.name}
         completed={item.completed}
         onCheckboxChange={c => onItemCheckboxChange(item.id, c)}
         onValueChange={t => onItemValueChange(item.id, t)}

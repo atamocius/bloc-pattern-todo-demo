@@ -39,8 +39,8 @@ const todoBloc = new TodoBloc(todoService);
 //   name: 'there',
 //   completed: false,
 // });
-todoBloc.showAll = false;
-todoBloc.showAll = true;
+// todoBloc.showAll = false;
+// todoBloc.showAll = true;
 
 class App extends Component {
   render() {
