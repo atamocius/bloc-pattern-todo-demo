@@ -18,7 +18,7 @@ class ItemOp {
   static add = 'add';
   static remove = 'remove';
   static filter = 'filter';
-  static update = 'update';
+  static updateName = 'updateName';
   static updateCompleted = 'updateCompleted';
 }
 
@@ -32,7 +32,7 @@ export default class TodoBloc {
       shareReplay()
     );
 
-    this._item$ = concat(allItems, this._itemSubject).pipe(
+    this._itemObservable = concat(allItems, this._itemSubject).pipe(
       startWith({
         items: [],
         filter: Filter.all,
@@ -57,7 +57,7 @@ export default class TodoBloc {
             return acc;
           }
 
-          case ItemOp.update: {
+          case ItemOp.updateName: {
             const a = await acc;
             await this._updateName(
               todoService,
@@ -102,18 +102,18 @@ export default class TodoBloc {
   }
 
   get items() {
-    return this._item$.pipe(map(results => results.items));
+    return this._itemObservable.pipe(map(results => results.items));
   }
 
   get activeCount() {
-    return this._item$.pipe(map(results => results.activeCount));
+    return this._itemObservable.pipe(map(results => results.activeCount));
   }
 
-  get filter() {
-    return this._item$.pipe(map(results => results.filter));
+  get selectedFilter() {
+    return this._itemObservable.pipe(map(results => results.filter));
   }
 
-  set filter(value) {
+  filter(value) {
     this._itemSubject.next({
       op: ItemOp.filter,
       filter: value,
@@ -136,7 +136,7 @@ export default class TodoBloc {
 
   updateName(id, name) {
     this._itemSubject.next({
-      op: ItemOp.update,
+      op: ItemOp.updateName,
       id,
       name,
     });
@@ -148,6 +148,10 @@ export default class TodoBloc {
       id,
       completed,
     });
+  }
+
+  dispose() {
+    this._itemSubject.complete();
   }
 
   async _addItem(service, items, newItem) {
