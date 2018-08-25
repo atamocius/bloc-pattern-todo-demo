@@ -39,9 +39,11 @@ export const retryableAsync = async (
     try {
       return await asyncFunc();
     } catch (error) {
-      console.log(`Failed attempt #${retryCount}`);
+      console.log(`Failed attempt #${retryCount}: ${error}`);
       await Promise.delay(timeDelay);
       retryCount++;
     }
   }
+
+  return Promise.error(`Async failed to execute after ${retryCount} retries`);
 };
