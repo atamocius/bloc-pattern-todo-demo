@@ -21,13 +21,13 @@ namespace todo_api
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<Todo>> GetAll()
+        public ActionResult<TodoItems> GetAll()
         {
             return this.Ok(this.todos.GetAll());
         }
 
         [HttpGet("{id}", Name = "GetTodo")]
-        public ActionResult<Todo> GetById(Guid id)
+        public ActionResult<TodoItem> GetById(Guid id)
         {
             var item = this.todos.GetById(id);
             if (item == null)
@@ -38,7 +38,7 @@ namespace todo_api
         }
 
         [HttpPost]
-        public IActionResult Create(Todo item)
+        public IActionResult Create(TodoItem item)
         {
             this.todos.Add(item);
 
@@ -46,7 +46,7 @@ namespace todo_api
         }
 
         [HttpPut("{id}")]
-        public IActionResult Update(Guid id, Todo item)
+        public IActionResult Update(Guid id, TodoItem item)
         {
             var todo = this.todos.Update(item);
 

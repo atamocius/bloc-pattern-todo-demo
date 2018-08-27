@@ -6,11 +6,11 @@ namespace todo_business
 {
     public interface ITodos
     {
-        Todo Add(Todo item);
+        TodoItem Add(TodoItem item);
         bool Delete(Guid id);
-        IEnumerable<Todo> GetAll();
-        Todo GetById(Guid id);
-        Todo Update(Todo item);
-        Todo UpdateCompleted(Guid id, bool completed);
+        TodoItems GetAll();
+        TodoItem GetById(Guid id);
+        TodoItem Update(TodoItem item);
+        TodoItem UpdateCompleted(Guid id, bool completed);
     }
 }

@@ -14,27 +14,27 @@ namespace todo_business
             this.repository = repository;
         }
 
-        public IEnumerable<Todo> GetAll()
+        public TodoItems GetAll()
         {
             return this.repository.GetAll();
         }
 
-        public Todo GetById(Guid id)
+        public TodoItem GetById(Guid id)
         {
             return this.repository.GetById(id);
         }
 
-        public Todo Add(Todo item)
+        public TodoItem Add(TodoItem item)
         {
             return this.repository.Add(item);
         }
 
-        public Todo Update(Todo item)
+        public TodoItem Update(TodoItem item)
         {
             return this.repository.Update(item);
         }
 
-        public Todo UpdateCompleted(Guid id, bool completed)
+        public TodoItem UpdateCompleted(Guid id, bool completed)
         {
             return this.repository.UpdateCompleted(id, completed);
         }
