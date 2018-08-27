@@ -115,9 +115,7 @@ export default function run() {
   console.log(sampleIds);
 
   let idCount = 0;
-  const getId = () => {
-    return sampleIds[idCount++];
-  };
+  const getId = () => sampleIds[idCount++];
 
   const items = [
     {
@@ -138,6 +136,7 @@ export default function run() {
   ];
 
   const getItems = () => of(items).toPromise();
+  // const getItems = async () => items;
 
   const addItem = item =>
     Observable.create(o => {
@@ -184,8 +183,7 @@ export default function run() {
     try {
       return await retryableAsync(() => getItems());
     } catch (error) {
-      console.error(error);
-      return [];
+      return Promise.reject(error);
     }
   };
 
@@ -193,25 +191,25 @@ export default function run() {
     try {
       return await retryableAsync(() => addItem(item));
     } catch (error) {
-      console.error(error);
+      return Promise.reject(error);
     }
   };
 
   const removeItemAsync = async id => {
     try {
-      return await retryableAsync(() => removeItem(id));
+      await retryableAsync(() => removeItem(id));
+      return Promise.resolve();
     } catch (error) {
-      console.error(error);
-      return false;
+      return Promise.reject(error);
     }
   };
 
   const completeItemAsync = async id => {
     try {
-      return await retryableAsync(() => completeItem(id));
+      await retryableAsync(() => completeItem(id));
+      return Promise.resolve();
     } catch (error) {
-      console.error(error);
-      return false;
+      return Promise.reject(error);
     }
   };
 
@@ -287,10 +285,10 @@ export default function run() {
               throw new Error(`Cannot find item with ID = "${request.id}".`);
             }
 
-            const success = await removeItemAsync(request.id);
-
-            if (!success) {
-              throw new Error(`Server: Failed to remove item "${request.id}".`);
+            try {
+              await removeItemAsync(request.id);
+            } catch (error) {
+              throw new Error(error);
             }
 
             a.items.splice(matchedIndex, 1);
@@ -307,12 +305,10 @@ export default function run() {
               throw new Error(`Cannot find item with ID = "${request.id}".`);
             }
 
-            const success = await completeItemAsync(request.id);
-
-            if (!success) {
-              throw new Error(
-                `Server: Failed to mark item "${request.id}" as complete.`
-              );
+            try {
+              await completeItemAsync(request.id);
+            } catch (error) {
+              throw new Error(error);
             }
 
             a.items[matchedIndex].completed = true;

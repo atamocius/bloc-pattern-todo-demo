@@ -13,10 +13,9 @@ export default class TodoService {
         return await res.json();
       }
 
-      throw new Error(`${res.status}: ${res.statusText}`);
+      return Promise.reject(`${res.status}: ${res.statusText}`);
     } catch (error) {
-      console.error('Fetch Error =\n', error);
-      return [];
+      return Promise.reject(`Fetch Error: ${error}`);
     }
   }
 
@@ -36,9 +35,9 @@ export default class TodoService {
         return await res.json();
       }
 
-      throw new Error(`${res.status}: ${res.statusText}`);
+      return Promise.reject(`${res.status}: ${res.statusText}`);
     } catch (error) {
-      console.error('Fetch Error =\n', error);
+      return Promise.reject(`Fetch Error: ${error}`);
     }
   }
 
@@ -55,13 +54,12 @@ export default class TodoService {
       );
 
       if (res.status === 204) {
-        return true;
+        return Promise.resolve();
       }
 
-      throw new Error(`${res.status}: ${res.statusText}`);
+      return Promise.reject(`${res.status}: ${res.statusText}`);
     } catch (error) {
-      console.error('Fetch Error =\n', error);
-      return false;
+      return Promise.reject(`Fetch Error: ${error}`);
     }
   }
 
@@ -70,20 +68,16 @@ export default class TodoService {
       const res = await retryableAsync(() =>
         fetch(`${this._serviceUrl}/${id}/${completed}`, {
           method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json; charset=utf-8',
-          },
         })
       );
 
       if (res.status === 204) {
-        return true;
+        return Promise.resolve();
       }
 
-      throw new Error(`${res.status}: ${res.statusText}`);
+      return Promise.reject(`${res.status}: ${res.statusText}`);
     } catch (error) {
-      console.error('Fetch Error =\n', error);
-      return false;
+      return Promise.reject(`Fetch Error: ${error}`);
     }
   }
 
@@ -92,20 +86,16 @@ export default class TodoService {
       const res = await retryableAsync(() =>
         fetch(`${this._serviceUrl}/${id}`, {
           method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json; charset=utf-8',
-          },
         })
       );
 
       if (res.status === 204) {
-        return true;
+        return Promise.resolve();
       }
 
-      throw new Error(`${res.status}: ${res.statusText}`);
+      return Promise.reject(`${res.status}: ${res.statusText}`);
     } catch (error) {
-      console.error('Fetch Error =\n', error);
-      return false;
+      return Promise.reject(`Fetch Error: ${error}`);
     }
   }
 }

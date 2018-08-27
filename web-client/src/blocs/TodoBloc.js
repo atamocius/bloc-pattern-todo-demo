@@ -28,61 +28,56 @@ export default class TodoBloc {
 
     const allItems = from(todoService.getAll()).pipe(
       tap(_ => console.log('BOOM', _)),
-      flatMap(items => items),
+      flatMap(data => data.items),
       shareReplay()
     );
 
+    const data = {
+      items: [],
+      filter: Filter.all,
+    };
+
     this._itemObservable = concat(allItems, this._itemSubject).pipe(
-      startWith({
-        items: [],
-        filter: Filter.all,
-      }),
-      scan(async (acc, request) => {
+      flatMap(async request => {
         if (!request.op) {
-          const a = await acc;
-          a.items.push(request);
-          return acc;
+          data.items.push(request);
+          return data;
         }
 
         switch (request.op) {
           case ItemOp.add: {
-            const a = await acc;
-            await this._addItem(todoService, a.items, request.item);
-            return acc;
+            await this._addItem(todoService, data.items, request.item);
+            return data;
           }
 
           case ItemOp.remove: {
-            const a = await acc;
-            await this._removeItem(todoService, a.items, request.id);
-            return acc;
+            await this._removeItem(todoService, data.items, request.id);
+            return data;
           }
 
           case ItemOp.updateName: {
-            const a = await acc;
             await this._updateName(
               todoService,
-              a.items,
+              data.items,
               request.id,
               request.name
             );
-            return acc;
+            return data;
           }
 
           case ItemOp.updateCompleted: {
-            const a = await acc;
             await this._updateCompleted(
               todoService,
-              a.items,
+              data.items,
               request.id,
               request.completed
             );
-            return acc;
+            return data;
           }
 
           case ItemOp.filter: {
-            const a = await acc;
-            a.filter = request.filter;
-            return acc;
+            data.filter = request.filter;
+            return data;
           }
 
           default:
@@ -99,6 +94,74 @@ export default class TodoBloc {
       }),
       shareReplay()
     );
+
+    // this._itemObservable = concat(allItems, this._itemSubject).pipe(
+    //   startWith({
+    //     items: [],
+    //     filter: Filter.all,
+    //   }),
+    //   scan(async (acc, request) => {
+    //     if (!request.op) {
+    //       const a = await acc;
+    //       a.items.push(request);
+    //       return acc;
+    //     }
+
+    //     switch (request.op) {
+    //       case ItemOp.add: {
+    //         const a = await acc;
+    //         await this._addItem(todoService, a.items, request.item);
+    //         return acc;
+    //       }
+
+    //       case ItemOp.remove: {
+    //         const a = await acc;
+    //         await this._removeItem(todoService, a.items, request.id);
+    //         return acc;
+    //       }
+
+    //       case ItemOp.updateName: {
+    //         const a = await acc;
+    //         await this._updateName(
+    //           todoService,
+    //           a.items,
+    //           request.id,
+    //           request.name
+    //         );
+    //         return acc;
+    //       }
+
+    //       case ItemOp.updateCompleted: {
+    //         const a = await acc;
+    //         await this._updateCompleted(
+    //           todoService,
+    //           a.items,
+    //           request.id,
+    //           request.completed
+    //         );
+    //         return acc;
+    //       }
+
+    //       case ItemOp.filter: {
+    //         const a = await acc;
+    //         a.filter = request.filter;
+    //         return acc;
+    //       }
+
+    //       default:
+    //         throw new Error(`Unknown operation: "${request.op}"`);
+    //     }
+    //   }),
+    //   flatMap(async results => {
+    //     const r = await results;
+    //     return {
+    //       items: this._applyFilter(r.items, r.filter),
+    //       filter: r.filter,
+    //       activeCount: this._applyFilter(r.items, Filter.active).length,
+    //     };
+    //   }),
+    //   shareReplay()
+    // );
   }
 
   get items() {
@@ -166,10 +229,10 @@ export default class TodoBloc {
       throw new Error(`Cannot find item with ID = "${id}".`);
     }
 
-    const success = await service.remove(id);
-
-    if (!success) {
-      throw new Error(`Server: Failed to remove item "${id}".`);
+    try {
+      await service.remove(id);
+    } catch (error) {
+      throw new Error(error);
     }
 
     items.splice(matchedIndex, 1);
@@ -184,10 +247,11 @@ export default class TodoBloc {
 
     const matchedItem = items[matchedIndex];
     matchedItem.name = name;
-    const success = await service.update(id, matchedItem);
 
-    if (!success) {
-      throw new Error(`Server: Failed to update item "${id}".`);
+    try {
+      await service.update(id, matchedItem);
+    } catch (error) {
+      throw new Error(error);
     }
 
     items[matchedIndex].name = name;
@@ -200,10 +264,10 @@ export default class TodoBloc {
       throw new Error(`Cannot find item with ID = "${id}".`);
     }
 
-    const success = await service.updateCompleted(id, completed);
-
-    if (!success) {
-      throw new Error(`Server: Failed to update item "${id}".`);
+    try {
+      await service.updateCompleted(id, completed);
+    } catch (error) {
+      throw new Error(error);
     }
 
     items[matchedIndex].completed = completed;
