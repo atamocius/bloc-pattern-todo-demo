@@ -17,7 +17,7 @@ class Filter {
 class ItemOp {
   static add = 'add';
   static remove = 'remove';
-  static filter = 'filter';
+  static updatedFilter = 'updatedFilter';
   static updateName = 'updateName';
   static updateCompleted = 'updateCompleted';
 }
@@ -34,7 +34,7 @@ export default class TodoBloc {
 
     const data = {
       items: [],
-      filter: Filter.all,
+      selectedFilter: Filter.all,
     };
 
     this._itemObservable = concat(allItems, this._itemSubject).pipe(
@@ -75,8 +75,8 @@ export default class TodoBloc {
             return data;
           }
 
-          case ItemOp.filter: {
-            data.filter = request.filter;
+          case ItemOp.updatedFilter: {
+            data.selectedFilter = request.filter;
             return data;
           }
 
@@ -87,8 +87,8 @@ export default class TodoBloc {
       flatMap(async results => {
         const r = await results;
         return {
-          items: this._applyFilter(r.items, r.filter),
-          filter: r.filter,
+          items: this._applyFilter(r.items, r.selectedFilter),
+          selectedFilter: r.filter,
           activeCount: this._applyFilter(r.items, Filter.active).length,
         };
       }),
@@ -173,12 +173,12 @@ export default class TodoBloc {
   }
 
   get selectedFilter() {
-    return this._itemObservable.pipe(map(results => results.filter));
+    return this._itemObservable.pipe(map(results => results.selectedFilter));
   }
 
-  filter(value) {
+  updateFilter(value) {
     this._itemSubject.next({
-      op: ItemOp.filter,
+      op: ItemOp.updatedFilter,
       filter: value,
     });
   }
@@ -229,11 +229,7 @@ export default class TodoBloc {
       throw new Error(`Cannot find item with ID = "${id}".`);
     }
 
-    try {
-      await service.remove(id);
-    } catch (error) {
-      throw new Error(error);
-    }
+    await service.remove(id);
 
     items.splice(matchedIndex, 1);
   }
@@ -248,11 +244,7 @@ export default class TodoBloc {
     const matchedItem = items[matchedIndex];
     matchedItem.name = name;
 
-    try {
-      await service.update(id, matchedItem);
-    } catch (error) {
-      throw new Error(error);
-    }
+    await service.update(id, matchedItem);
 
     items[matchedIndex].name = name;
   }
@@ -264,11 +256,7 @@ export default class TodoBloc {
       throw new Error(`Cannot find item with ID = "${id}".`);
     }
 
-    try {
-      await service.updateCompleted(id, completed);
-    } catch (error) {
-      throw new Error(error);
-    }
+    await service.updateCompleted(id, completed);
 
     items[matchedIndex].completed = completed;
   }

@@ -29,17 +29,17 @@ const FilterOptions = () => (
               <Menu.Item
                 active={snapshot.data === Filter.all}
                 name={Filter.all}
-                onClick={() => bloc.filter(Filter.all)}
+                onClick={() => bloc.updateFilter(Filter.all)}
               />
               <Menu.Item
                 active={snapshot.data === Filter.active}
                 name={Filter.active}
-                onClick={() => bloc.filter(Filter.active)}
+                onClick={() => bloc.updateFilter(Filter.active)}
               />
               <Menu.Item
                 active={snapshot.data === Filter.completed}
                 name={Filter.completed}
-                onClick={() => bloc.filter(Filter.completed)}
+                onClick={() => bloc.updateFilter(Filter.completed)}
               />
             </Fragment>
           )}
