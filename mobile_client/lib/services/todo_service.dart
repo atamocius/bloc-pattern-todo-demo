@@ -23,9 +23,7 @@ class TodoServiceImpl extends TodoService {
       var res = await retryableAsync(() => http.get(this.serviceUri));
 
       if (res.statusCode == 200) {
-        var data = TodoItems.fromJson(json.decode(res.body));
-        print(data);
-        return data;
+        return TodoItems.fromJson(json.decode(res.body));
       }
 
       return Future.error('${res.statusCode}: ${res.body}');

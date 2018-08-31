@@ -1,26 +1,11 @@
 import 'package:flutter/material.dart';
-import '../blocs/counter_bloc.dart';
+import '../providers/counter_provider.dart';
 
-class CounterPage extends StatefulWidget {
-  final CounterBloc bloc;
-
-  CounterPage({Key key})
-      : bloc = CounterBlocImpl(),
-        super(key: key);
-
-  @override
-  _CounterPageState createState() => _CounterPageState();
-}
-
-class _CounterPageState extends State<CounterPage> {
-  @override
-  void dispose() {
-    widget.bloc.dispose();
-    super.dispose();
-  }
-
+class CounterPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final bloc = CounterProvider.of(context);
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Counter BLoC Demo'),
@@ -34,7 +19,7 @@ class _CounterPageState extends State<CounterPage> {
             ),
             StreamBuilder<int>(
               initialData: 0,
-              stream: widget.bloc.counter,
+              stream: bloc.counter,
               builder: (context, snapshot) {
                 return Text(
                   '${snapshot.data}',
@@ -46,7 +31,7 @@ class _CounterPageState extends State<CounterPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => widget.bloc.increment(),
+        onPressed: () => bloc.increment(),
         tooltip: 'Increment',
         child: Icon(Icons.add),
       ),

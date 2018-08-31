@@ -100,8 +100,7 @@ class TodoBlocImpl extends TodoBloc {
         _selectedFilterController = StreamController.broadcast(),
         _opController = StreamController() {
     //
-    final serverItemsStream = Stream
-        .fromFuture(_service.getAll())
+    final serverItemsStream = Stream.fromFuture(_service.getAll())
         .map((data) => data.items)
         .map((items) => items..forEach((item) => _items.add(item)));
 
@@ -109,10 +108,16 @@ class TodoBlocImpl extends TodoBloc {
       (op) async => await _executeOp(op),
     );
 
-    _itemsStream = StreamGroup.merge([
-      serverItemsStream,
-      opsStream,
-    ]).asBroadcastStream();
+    // _itemsStream = StreamGroup.merge([
+    //   serverItemsStream,
+    //   opsStream,
+    // ]).asBroadcastStream();
+    _itemsStream = LazyStream(() {
+      return StreamGroup.merge([
+        serverItemsStream,
+        opsStream,
+      ]).asBroadcastStream();
+    });
 
     _items = List();
     _selectedFilter = Filter.all;
