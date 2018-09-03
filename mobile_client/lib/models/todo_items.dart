@@ -7,7 +7,7 @@ class TodoItems {
 
   factory TodoItems.fromJson(Map<String, dynamic> json) {
     var jsonItems = json['items'] as List;
-    var todoItems = jsonItems.map((item) => TodoItem.fromJson(item));
+    var todoItems = jsonItems.map((item) => TodoItem.fromJson(item)).toList();
     return TodoItems(todoItems);
   }
 

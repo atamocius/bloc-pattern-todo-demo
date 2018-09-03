@@ -53,7 +53,7 @@ class Op {
 }
 
 abstract class TodoBloc {
-  Stream<Iterable<TodoItem>> items;
+  Stream<List<TodoItem>> items;
   Stream<int> activeCount;
   Stream<Filter> selectedFilter;
 
@@ -91,7 +91,7 @@ class TodoBlocImpl extends TodoBloc {
   List<TodoItem> _items;
   Filter _selectedFilter;
 
-  Stream<Iterable<TodoItem>> _itemsStream;
+  Stream<List<TodoItem>> _itemsStream;
 
   EventSink<Op> get _opSink => _opController;
 
@@ -129,7 +129,7 @@ class TodoBlocImpl extends TodoBloc {
     super.dispose();
   }
 
-  Stream<Iterable<TodoItem>> get items {
+  Stream<List<TodoItem>> get items {
     return _itemsStream;
   }
 
@@ -141,7 +141,7 @@ class TodoBlocImpl extends TodoBloc {
     return _selectedFilterController.stream;
   }
 
-  Future<Iterable<TodoItem>> _executeOp(Op op) async {
+  Future<List<TodoItem>> _executeOp(Op op) async {
     print(op.op);
 
     switch (op.op) {

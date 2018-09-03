@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import '../models/todo_items.dart';
 import '../providers/todo_provider.dart';
 
-typedef void IconTapCallback(bool complete);
+typedef void CheckboxTapCallback(bool completed);
+typedef void TodoItemCheckboxTapCallback(String id, bool completed);
 
 class TodoListItem extends StatelessWidget {
   final TodoItem todoItem;
-  final IconTapCallback onTap;
+  final CheckboxTapCallback onCheckboxTap;
 
-  TodoListItem(this.todoItem, {Key key, this.onTap}) : super(key: key);
+  TodoListItem(this.todoItem, {Key key, this.onCheckboxTap}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -25,13 +26,13 @@ class TodoListItem extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16.0,
-                  vertical: 8.0,
+                  vertical: 10.0,
                 ),
                 child: GestureDetector(
                   onTap: () {
-                    return this.onTap == null
+                    return this.onCheckboxTap == null
                         ? null
-                        : this.onTap(!this.todoItem.completed);
+                        : this.onCheckboxTap(!this.todoItem.completed);
                   },
                   child: icon,
                 ),
@@ -53,20 +54,33 @@ class TodoListItem extends StatelessWidget {
 }
 
 class TodoList extends StatelessWidget {
-  final TodoItems todoItems;
+  final List<TodoItem> todoItems;
+  final TodoItemCheckboxTapCallback onCheckboxTap;
 
-  TodoList(this.todoItems, {Key key}) : super(key: key);
+  TodoList(this.todoItems, {Key key, this.onCheckboxTap}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: ListView.builder(
-        shrinkWrap: true,
-        itemBuilder: (BuildContext context, int index) {
-          final item = this.todoItems.items[index];
-          return TodoListItem(item);
-        },
-      ),
+    return Column(
+      children: <Widget>[
+        Expanded(
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: this.todoItems.length,
+            itemBuilder: (BuildContext context, int index) {
+              final item = this.todoItems[index];
+              return TodoListItem(
+                item,
+                onCheckboxTap: (completed) {
+                  if (this.onCheckboxTap != null) {
+                    this.onCheckboxTap(item.id, completed);
+                  }
+                },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
@@ -87,77 +101,34 @@ class TodoPage extends StatelessWidget {
       //     return Text('${snapshot.data}');
       //   },
       // ),
-      body: Column(
-        children: <Widget>[
-          Expanded(
-            child: ListView(
-              shrinkWrap: true,
-              // padding: const EdgeInsets.all(20.0),
-              children: <Widget>[
-                TodoListItem(
-                  TodoItem(
-                    name:
-                        'When you smile, you knock me out, I fall apart I fall apart I fall apart I fall apart',
-                  ),
-                ),
-                TodoListItem(
-                  TodoItem(name: 'Buy milk', completed: true),
-                  onTap: (complete) {
-                    print(complete);
-                  },
-                ),
-                TodoListItem(
-                  TodoItem(name: 'Jump 3 times'),
-                ),
-                TodoListItem(
-                  TodoItem(
-                      name:
-                          'When you smile, you knock me out, I fall apart I fall apart I fall apart I fall apart'),
-                ),
-                TodoListItem(
-                  TodoItem(
-                      name:
-                          'When you smile, you knock me out, I fall apart I fall apart I fall apart I fall apart'),
-                ),
-                TodoListItem(
-                  TodoItem(
-                      name:
-                          'When you smile, you knock me out, I fall apart I fall apart I fall apart I fall apart'),
-                ),
-                TodoListItem(
-                  TodoItem(
-                      name:
-                          'When you smile, you knock me out, I fall apart I fall apart I fall apart I fall apart'),
-                ),
-                TodoListItem(
-                  TodoItem(
-                      name:
-                          'When you smile, you knock me out, I fall apart I fall apart I fall apart I fall apart'),
-                ),
-                TodoListItem(
-                  TodoItem(
-                      name:
-                          'When you smile, you knock me out, I fall apart I fall apart I fall apart I fall apart'),
-                ),
-                TodoListItem(
-                  TodoItem(
-                      name:
-                          'When you smile, you knock me out, I fall apart I fall apart I fall apart I fall apart'),
-                ),
-                TodoListItem(
-                  TodoItem(
-                      name:
-                          'When you smile, you knock me out, I fall apart I fall apart I fall apart I fall apart'),
-                ),
-                TodoListItem(
-                  TodoItem(
-                      name:
-                          'When you smile, you knock me out, I fall apart I fall apart I fall apart I fall apart'),
-                ),
-              ],
-            ),
-          ),
-        ],
+      body: StreamBuilder<List<TodoItem>>(
+        initialData: [],
+        stream: bloc.items,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            print('ERROR!!!');
+            print(snapshot.error);
+            return Container();
+          }
+
+          if (!snapshot.hasData) {
+            print('NO DATA!');
+            return Container();
+          }
+
+          // if (snapshot.data.length == 0) {
+          //   print('EMPTY LIST!');
+          //   return Container();
+          // }
+
+          print('TODO ITEMS: ${snapshot.data}');
+          return TodoList(
+            snapshot.data,
+            onCheckboxTap: (String id, bool completed) {
+              bloc.updateCompleted(id, completed);
+            },
+          );
+        },
       ),
     );
   }
