@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 class TodoItems {
-  final Iterable<TodoItem> items;
+  final List<TodoItem> items;
 
   TodoItems(this.items);
 

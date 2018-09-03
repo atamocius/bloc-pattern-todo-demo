@@ -1,6 +1,7 @@
 import 'dart:async';
 
-typedef AsyncFunc<T> = Future<T> Function();
+// typedef AsyncFunc<T> = Future<T> Function();
+typedef Future<T> AsyncFunc<T>();
 
 Future<T> retryableAsync<T>(
   AsyncFunc<T> asyncFunc, {
