@@ -11,6 +11,7 @@ enum Filter {
 }
 
 enum ItemOp {
+  refresh,
   add,
   remove,
   updateFilter,
@@ -28,6 +29,8 @@ class Op {
   Filter filter;
 
   Op();
+
+  factory Op.refresh() => Op()..op = ItemOp.refresh;
 
   factory Op.add(TodoItem item) => Op()
     ..op = ItemOp.add
@@ -60,6 +63,10 @@ abstract class TodoBloc {
   EventSink<Op> _opSink;
 
   void dispose() => _opSink.close();
+
+  void refresh() {
+    _opSink.add(Op.refresh());
+  }
 
   void add(TodoItem item) {
     _opSink.add(Op.add(item));
@@ -145,6 +152,11 @@ class TodoBlocImpl extends TodoBloc {
     print(op.op);
 
     switch (op.op) {
+      case ItemOp.refresh:
+        await _refreshItems(_service, _items);
+        _updateActiveCount();
+        break;
+
       case ItemOp.add:
         await _addItem(_service, _items, op.item);
         _updateActiveCount();
@@ -179,6 +191,12 @@ class TodoBlocImpl extends TodoBloc {
   void _updateActiveCount() {
     final activeCount = _applyFilter(_items, Filter.active).length;
     _activeCountController.add(activeCount);
+  }
+
+  Future<void> _refreshItems(TodoService service, List<TodoItem> items) async {
+    final todoItems = await service.getAll();
+    items.clear();
+    items.addAll(todoItems.items);
   }
 
   Future<void> _addItem(

@@ -59,8 +59,10 @@ class TodoListItem extends StatelessWidget {
 class TodoList extends StatelessWidget {
   final List<TodoItem> todoItems;
   final TodoItemCheckboxTapCallback onCheckboxTap;
+  final RefreshCallback onRefresh;
 
-  TodoList(this.todoItems, {Key key, this.onCheckboxTap}) : super(key: key);
+  TodoList(this.todoItems, {Key key, this.onCheckboxTap, this.onRefresh})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -80,9 +82,7 @@ class TodoList extends StatelessWidget {
           );
         },
       ),
-      onRefresh: () async {
-        await new Future.delayed(new Duration(seconds: 3));
-      },
+      onRefresh: this.onRefresh,
     );
   }
 }
@@ -139,6 +139,9 @@ class TodoPage extends StatelessWidget {
               snapshot.data,
               onCheckboxTap: (String id, bool completed) {
                 bloc.updateCompleted(id, completed);
+              },
+              onRefresh: () async {
+                bloc.refresh();
               },
             );
           },
