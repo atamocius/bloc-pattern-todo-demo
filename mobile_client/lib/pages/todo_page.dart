@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../models/todo_items.dart';
 import '../providers/todo_provider.dart';
+import 'add_todo_page.dart';
 
 typedef void CheckboxTapCallback(bool completed);
 typedef void TodoItemCheckboxTapCallback(String id, bool completed);
@@ -61,31 +64,40 @@ class TodoList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        Expanded(
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: this.todoItems.length,
-            itemBuilder: (BuildContext context, int index) {
-              final item = this.todoItems[index];
-              return TodoListItem(
-                item,
-                onCheckboxTap: (completed) {
-                  if (this.onCheckboxTap != null) {
-                    this.onCheckboxTap(item.id, completed);
-                  }
-                },
-              );
+    return RefreshIndicator(
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        itemCount: this.todoItems.length,
+        itemBuilder: (BuildContext context, int index) {
+          final item = this.todoItems[index];
+          return TodoListItem(
+            item,
+            onCheckboxTap: (completed) {
+              if (this.onCheckboxTap != null) {
+                this.onCheckboxTap(item.id, completed);
+              }
             },
-          ),
-        ),
-      ],
+          );
+        },
+      ),
+      onRefresh: () async {
+        await new Future.delayed(new Duration(seconds: 3));
+      },
     );
   }
 }
 
 class TodoPage extends StatelessWidget {
+  Future<TodoItem> _showAddTodoPage(BuildContext context) async {
+    // TODO: use pushNamed!
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AddTodoPage()),
+    );
+
+    return result;
+  }
+
   @override
   Widget build(BuildContext context) {
     final bloc = TodoProvider.of(context);
@@ -101,34 +113,44 @@ class TodoPage extends StatelessWidget {
       //     return Text('${snapshot.data}');
       //   },
       // ),
-      body: StreamBuilder<List<TodoItem>>(
-        initialData: [],
-        stream: bloc.items,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            print('ERROR!!!');
-            print(snapshot.error);
-            return Container();
-          }
+      body: SafeArea(
+        child: StreamBuilder<List<TodoItem>>(
+          initialData: [],
+          stream: bloc.items,
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              print('ERROR!!!');
+              print(snapshot.error);
+              return Container();
+            }
 
-          if (!snapshot.hasData) {
-            print('NO DATA!');
-            return Container();
-          }
+            if (!snapshot.hasData) {
+              print('NO DATA!');
+              return Container();
+            }
 
-          // if (snapshot.data.length == 0) {
-          //   print('EMPTY LIST!');
-          //   return Container();
-          // }
+            // if (snapshot.data.length == 0) {
+            //   print('EMPTY LIST!');
+            //   return Container();
+            // }
 
-          print('TODO ITEMS: ${snapshot.data}');
-          return TodoList(
-            snapshot.data,
-            onCheckboxTap: (String id, bool completed) {
-              bloc.updateCompleted(id, completed);
-            },
-          );
+            print('TODO ITEMS: ${snapshot.data}');
+            return TodoList(
+              snapshot.data,
+              onCheckboxTap: (String id, bool completed) {
+                bloc.updateCompleted(id, completed);
+              },
+            );
+          },
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final newItem = await _showAddTodoPage(context);
+          bloc.add(newItem);
         },
+        tooltip: 'Add Todo',
+        child: Icon(Icons.add),
       ),
     );
   }

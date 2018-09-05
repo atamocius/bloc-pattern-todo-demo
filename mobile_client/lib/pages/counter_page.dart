@@ -10,24 +10,26 @@ class CounterPage extends StatelessWidget {
       appBar: AppBar(
         title: Text('Counter BLoC Demo'),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
-            ),
-            StreamBuilder<int>(
-              initialData: 0,
-              stream: bloc.counter,
-              builder: (context, snapshot) {
-                return Text(
-                  '${snapshot.data}',
-                  style: Theme.of(context).textTheme.display1,
-                );
-              },
-            ),
-          ],
+      body: SafeArea(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Text(
+                'You have pushed the button this many times:',
+              ),
+              StreamBuilder<int>(
+                initialData: 0,
+                stream: bloc.counter,
+                builder: (context, snapshot) {
+                  return Text(
+                    '${snapshot.data}',
+                    style: Theme.of(context).textTheme.display1,
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
