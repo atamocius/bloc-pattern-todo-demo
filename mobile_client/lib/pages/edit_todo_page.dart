@@ -1,22 +1,28 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import '../models/todo_items.dart';
 
-class AddTodoPage extends StatefulWidget {
+class EditTodoPage extends StatefulWidget {
+  final TodoItem item;
+  final TextEditingController nameController;
+
+  EditTodoPage({Key key, this.item})
+      : nameController = TextEditingController(text: item?.name),
+        super(key: key);
+
   @override
-  _AddTodoPageState createState() => _AddTodoPageState();
+  _EditTodoPageState createState() => _EditTodoPageState();
 }
 
-class _AddTodoPageState extends State<AddTodoPage> {
+class _EditTodoPageState extends State<EditTodoPage> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
+    String title = widget.item == null ? 'Add Todo' : 'Edit Todo';
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Add Todo'),
+        title: Text(title),
       ),
       body: SafeArea(
         child: Padding(
@@ -28,7 +34,7 @@ class _AddTodoPageState extends State<AddTodoPage> {
                 TextFormField(
                   decoration: InputDecoration(labelText: 'Name'),
                   autofocus: true,
-                  controller: _nameController,
+                  controller: widget.nameController,
                   validator: (value) {
                     if (value.isEmpty) {
                       return 'Please enter some text';
@@ -42,10 +48,14 @@ class _AddTodoPageState extends State<AddTodoPage> {
                       child: Text('Submit'),
                       onPressed: () {
                         if (_formKey.currentState.validate()) {
-                          print('Name: ${_nameController.text}');
+                          print('Name: ${widget.nameController.text}');
                           Navigator.pop(
                             context,
-                            TodoItem(name: _nameController.text),
+                            TodoItem(
+                              id: widget.item?.id,
+                              name: widget.nameController.text,
+                              completed: widget.item?.completed ?? false,
+                            ),
                           );
                         }
                       },

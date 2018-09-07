@@ -4,20 +4,27 @@ import 'package:flutter/material.dart';
 import '../blocs/todo_bloc.dart';
 import '../models/todo_items.dart';
 import '../providers/todo_provider.dart';
-import 'add_todo_page.dart';
+import 'edit_todo_page.dart';
 
-typedef void CheckboxTapCallback(bool completed);
+typedef void TapCheckboxCallback(bool completed);
 typedef void RemoveItemCallback(String id);
+typedef void TapItemCallback(TodoItem item);
 
-typedef void TodoItemCheckboxTapCallback(String id, bool completed);
+typedef void TapItemCheckboxCallback(String id, bool completed);
 
 class TodoListItem extends StatelessWidget {
   final TodoItem todoItem;
-  final CheckboxTapCallback onCheckboxTap;
+  final TapCheckboxCallback onTapCheckbox;
   final RemoveItemCallback onRemove;
+  final TapItemCallback onTap;
 
-  TodoListItem(this.todoItem, {Key key, this.onCheckboxTap, this.onRemove})
-      : super(key: key);
+  TodoListItem(
+    this.todoItem, {
+    Key key,
+    this.onTap,
+    this.onTapCheckbox,
+    this.onRemove,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -32,76 +39,89 @@ class TodoListItem extends StatelessWidget {
           )
         : null;
 
-    return Column(
-      children: <Widget>[
-        Dismissible(
-          key: Key(this.todoItem.id),
-          background: Container(color: Colors.red),
-          onDismissed: (dir) {
-            if (this.onRemove != null) {
-              this.onRemove(this.todoItem.id);
-            }
-          },
-          child: Row(
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 10.0,
-                ),
-                child: GestureDetector(
-                  onTap: () {
-                    if (this.onCheckboxTap != null) {
-                      this.onCheckboxTap(!this.todoItem.completed);
-                    }
-                  },
-                  child: icon,
-                ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 12.0),
-                  child: Text(
-                    this.todoItem.name,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 2,
-                    style: textStyle,
+    return GestureDetector(
+      onTap: () {
+        if (this.onTap != null) {
+          this.onTap(this.todoItem);
+        }
+      },
+      child: Column(
+        children: <Widget>[
+          Dismissible(
+            key: Key(this.todoItem.id),
+            background: Container(color: Colors.red),
+            onDismissed: (dir) {
+              if (this.onRemove != null) {
+                this.onRemove(this.todoItem.id);
+              }
+            },
+            child: Row(
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 10.0,
+                  ),
+                  child: GestureDetector(
+                    onTap: () {
+                      if (this.onTapCheckbox != null) {
+                        this.onTapCheckbox(!this.todoItem.completed);
+                      }
+                    },
+                    child: icon,
                   ),
                 ),
-              ),
-            ],
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 12.0),
+                    child: Text(
+                      this.todoItem.name,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
+                      style: textStyle,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        Divider(height: 1.0),
-      ],
+          Divider(height: 1.0),
+        ],
+      ),
     );
   }
 }
 
 class TodoList extends StatelessWidget {
   final List<TodoItem> todoItems;
-  final TodoItemCheckboxTapCallback onCheckboxTap;
+  final TapItemCheckboxCallback onTapCheckbox;
   final RefreshCallback onRefresh;
   final RemoveItemCallback onRemoveItem;
+  final TapItemCallback onTapItem;
 
-  TodoList(this.todoItems,
-      {Key key, this.onCheckboxTap, this.onRefresh, this.onRemoveItem})
-      : super(key: key);
+  TodoList(
+    this.todoItems, {
+    Key key,
+    this.onTapItem,
+    this.onTapCheckbox,
+    this.onRefresh,
+    this.onRemoveItem,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
       child: ListView.builder(
-        // padding: const EdgeInsets.only(top: 30.0),
         physics: const AlwaysScrollableScrollPhysics(),
         itemCount: this.todoItems.length,
         itemBuilder: (BuildContext context, int index) {
           final item = this.todoItems[index];
           return TodoListItem(
             item,
-            onCheckboxTap: (completed) {
-              if (this.onCheckboxTap != null) {
-                this.onCheckboxTap(item.id, completed);
+            onTap: this.onTapItem,
+            onTapCheckbox: (completed) {
+              if (this.onTapCheckbox != null) {
+                this.onTapCheckbox(item.id, completed);
               }
             },
             onRemove: this.onRemoveItem,
@@ -118,7 +138,20 @@ class TodoPage extends StatelessWidget {
     // TODO: use pushNamed!
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => AddTodoPage()),
+      MaterialPageRoute(builder: (context) => EditTodoPage()),
+    );
+
+    return result;
+  }
+
+  Future<TodoItem> _showEditTodoPage(
+    BuildContext context,
+    TodoItem item,
+  ) async {
+    // TODO: use pushNamed!
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => EditTodoPage(item: item)),
     );
 
     return result;
@@ -197,7 +230,13 @@ class TodoPage extends StatelessWidget {
                   print('TODO ITEMS: ${snapshot.data}');
                   return TodoList(
                     snapshot.data,
-                    onCheckboxTap: (String id, bool completed) {
+                    onTapItem: (TodoItem item) async {
+                      final editedItem = await _showEditTodoPage(context, item);
+                      if (editedItem != null) {
+                        bloc.updateName(editedItem.id, editedItem.name);
+                      }
+                    },
+                    onTapCheckbox: (String id, bool completed) {
                       bloc.updateCompleted(id, completed);
                     },
                     onRefresh: () async {
